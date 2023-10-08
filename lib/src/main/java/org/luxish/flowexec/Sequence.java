@@ -6,6 +6,7 @@ public class Sequence<STATE extends FlowState> extends FlowActionCollector<STATE
         super(flow);
     }
 
+    @Override
     public Flow.FlowBuilder<STATE> then() {
         flowBuilder.add(new SequenceAction<>(actions, handler != null ? handler : (ac, state)->{}));
         return flowBuilder;
