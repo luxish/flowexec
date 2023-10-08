@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Flow<STATE extends FlowState> {
 
-    private List<FlowAction> actions;
+    private List<FlowAction<STATE>> actions;
 
     private STATE sharedState;
 
@@ -28,13 +28,11 @@ public class Flow<STATE extends FlowState> {
             return;
         }
         actions.forEach(flowAction -> {
-            if (flowAction instanceof SequenceAction) {
-                SequenceAction<STATE> seqActions = (SequenceAction<STATE>) flowAction;
+            if (flowAction instanceof SequenceAction<STATE> seqActions) {
                 seqActions.genericActions().stream()
                         .map(GenericAction::exec)
                         .forEach(result -> seqActions.handler().accept(result, sharedState));
-            } else if (flowAction instanceof ParallelAction) {
-                ParallelAction<STATE> parallelAction = (ParallelAction<STATE>) flowAction;
+            } else if (flowAction instanceof ParallelAction<STATE> parallelAction) {
                 parallelAction.genericActions().stream()
                         .parallel()
                         .map(GenericAction::exec)
@@ -46,7 +44,7 @@ public class Flow<STATE extends FlowState> {
     public static class FlowBuilder<STATE extends FlowState> {
         private final Flow<STATE> flow;
 
-        private final List<FlowAction> actions = new ArrayList<>();
+        private final List<FlowAction<STATE>> actions = new ArrayList<>();
 
         FlowBuilder(Flow<STATE> flow) {
             this.flow = flow;
@@ -68,10 +66,9 @@ public class Flow<STATE extends FlowState> {
             actions.add(parallelAction);
         }
 
-        public Flow<?> stop() {
+        public Flow<STATE> stop() {
             flow.actions = new ArrayList<>(actions);
             return flow;
         }
-
     }
 }

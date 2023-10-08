@@ -1,4 +1,4 @@
 package org.luxish.flowexec;
 
-public interface FlowAction {
+public sealed interface FlowAction<STATE extends FlowState> permits ParallelAction, SequenceAction {
 }
