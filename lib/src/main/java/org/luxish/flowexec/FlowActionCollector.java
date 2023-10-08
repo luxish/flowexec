@@ -2,28 +2,28 @@ package org.luxish.flowexec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
-public abstract class FlowActionCollector {
-    protected final Flow.FlowBuilder flowBuilder;
+public abstract class FlowActionCollector<STATE extends FlowState> {
+    protected final Flow.FlowBuilder<STATE> flowBuilder;
 
     protected final List<GenericAction> actions = new ArrayList<>();
 
-    protected Consumer<GenericActionResult> handler;
+    protected BiConsumer<GenericActionResult, STATE> handler;
 
-    public FlowActionCollector(Flow.FlowBuilder flow) {
+    public FlowActionCollector(Flow.FlowBuilder<STATE> flow) {
         this.flowBuilder = flow;
     }
 
-    public FlowActionCollector add(GenericAction action) {
+    public FlowActionCollector<STATE> add(GenericAction action) {
         this.actions.add(action);
         return this;
     }
 
-    public FlowActionCollector handler(Consumer<GenericActionResult> handler) {
+    public FlowActionCollector<STATE> handler(BiConsumer<GenericActionResult, STATE> handler) {
         this.handler = handler;
         return this;
     }
 
-    public abstract Flow.FlowBuilder then();
+    public abstract Flow.FlowBuilder<STATE> then();
 }

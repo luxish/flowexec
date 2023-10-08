@@ -1,7 +1,7 @@
 package org.luxish.flowexec;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
-public record SequenceAction(List<GenericAction> genericActions, Consumer<GenericActionResult> handler) implements FlowAction{
+public record SequenceAction<STATE extends FlowState>(List<GenericAction> genericActions, BiConsumer<GenericActionResult, STATE> handler) implements FlowAction{
 }

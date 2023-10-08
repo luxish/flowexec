@@ -4,15 +4,17 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class FlowTest {
 
     @Test
-    public void testFlow() {
-        new Flow().create()
+    public void testFlowNoState() {
+        Flow.create()
             .sequence()
                 .add(new SequnceGenericAction())
                 .add(new SequnceGenericAction())
-                .handler((result) -> System.out.println("Handle result=" +((SequenceResult)result).result()))
+                .handler((result, state) -> System.out.println("Handle result= " +((SequenceResult)result).result()))
             .then()
             .parallel()
                 .add(new ParallelGenericAction())
@@ -21,40 +23,72 @@ public class FlowTest {
                 .add(new ParallelGenericAction())
                 .add(new ParallelGenericAction())
                 .add(new ParallelGenericAction())
-                .handler((result) -> System.out.println("Handle result=" + ((ParallelResult)result).result()))
+                .handler((result,state) -> System.out.println("Handle result= " + ((ParallelResult)result).result()))
             .then()
             .stop()
             .execute();
     }
 
+    @Test
+    public void testFlowWithState() {
+        SharedState stateTest = new SharedState(0);
+        Flow.create(stateTest)
+            .parallel()
+                .add(new ParallelGenericAction())
+                .add(new ParallelGenericAction())
+                .handler((result, state) -> state.increment() )
+            .then()
+            .stop()
+            .execute();
+        assertEquals(2, stateTest.getCounter());
+    }
+
+
     private static class SequnceGenericAction implements GenericAction {
         @Override
         public GenericActionResult exec() {
-            System.out.printf("Sequence start thread='%s'%n", Thread.currentThread().getName());
+            long start = System.currentTimeMillis();
             try {
                 Thread.sleep(new Random().nextLong(1000, 2000));
             } catch (InterruptedException e) {
                 //
             }
-            System.out.printf("Sequence end thread='%s'%n", Thread.currentThread().getName());
-            return new SequenceResult("Done " + Thread.currentThread().getName());
+            String message = String.format("Sequence end thread='%s' timeMs=%d", Thread.currentThread().getName(),
+                    System.currentTimeMillis() - start);
+            return new SequenceResult(message);
         }
     }
 
     private static class ParallelGenericAction implements GenericAction {
         @Override
         public GenericActionResult exec() {
-            System.out.printf("Parallel start %s %n", Thread.currentThread().getName());
+            long start = System.currentTimeMillis();
             try {
                 Thread.sleep(new Random().nextLong(1000, 10000));
             } catch (InterruptedException e) {
                 //
             }
-            System.out.printf("Parallel end thread='%s'%n", Thread.currentThread().getName());
-            return new ParallelResult("Done " + Thread.currentThread().getName());
+            String message = String.format("Parallel end thread='%s' timeMs=%d", Thread.currentThread().getName(),
+                    System.currentTimeMillis() - start);
+            return new ParallelResult(message);
         }
     }
 
     private record SequenceResult(String result) implements GenericActionResult{}
     private record ParallelResult(String result) implements GenericActionResult{}
+    private static class SharedState implements FlowState {
+        private int counter;
+
+        public SharedState(int counter) {
+            this.counter = counter;
+        }
+
+        public int getCounter() {
+            return counter;
+        }
+
+        public void increment() {
+            this.counter++;
+        }
+    }
 }
